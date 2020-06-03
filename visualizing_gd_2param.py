@@ -2,7 +2,8 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import derivative as dx
-from gd_methods import gradient_descent
+from gd_methods import gradient_descent, adam
+from gd_methods import cost_func
 from gd_methods import fx as hypothesis
 
 parser = argparse.ArgumentParser('My program')
@@ -30,18 +31,6 @@ y = np.random.randn(m) + y
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,6.15))
 ax[0].scatter(x, y, marker='x', s=40, color='k')
 
-def cost_func(theta0, theta1, theta2):
-    """The cost function, J(theta0, theta1) describing the goodness of fit."""
-    theta0 = np.atleast_3d(np.asarray(theta0))
-    theta1 = np.atleast_3d(np.asarray(theta1))
-    theta2 = np.atleast_3d(np.asarray(theta2))
-    if show == 'theta0_1':
-    	return np.average((y - hypothesis(x, theta0, theta1, theta2_true))**2, axis=2)
-    elif show == 'theta1_2':
-    	return np.average((y - hypothesis(x, theta0_true, theta1, theta2))**2, axis=2)
-    elif show == 'theta0_2':
-    	return np.average((y - hypothesis(x, theta0, theta1_true, theta2))**2, axis=2)
-
 # First construct a grid of (theta0, theta1) parameter pairs and their
 # corresponding cost function values.
 theta0_grid = np.linspace(theta0_true-5, theta0_true+5,101)
@@ -49,9 +38,11 @@ theta1_grid = np.linspace(theta1_true-5, theta1_true+5,101)
 theta2_grid = np.linspace(theta2_true-5, theta2_true+5,101)
 
 if show == 'theta0_1':
-	J_grid = cost_func(theta0_grid[np.newaxis,:,np.newaxis],
+	J_grid = cost_func(x, y,
+					   theta0_grid[np.newaxis,:,np.newaxis],
 		               theta1_grid[:,np.newaxis,np.newaxis],
-		               theta2_grid[np.newaxis,:,np.newaxis])
+		               theta2_grid[np.newaxis,:,np.newaxis],
+					   theta0_true, theta1_true, theta2_true, show=show)
 	# A labeled contour plot for the RHS cost function
 	X, Y = np.meshgrid(theta0_grid, theta1_grid)
 	contours = ax[1].contour(X, Y, J_grid, 30)
@@ -60,9 +51,11 @@ if show == 'theta0_1':
 	ax[1].scatter([theta0_true]*2,[theta1_true]*2,s=[50,10], color=['k','w'])
 	
 elif show == 'theta1_2':
-	J_grid = cost_func(theta0_grid[np.newaxis,:,np.newaxis],
+	J_grid = cost_func(x, y,
+					   theta0_grid[np.newaxis,:,np.newaxis],
 		               theta1_grid[np.newaxis,:,np.newaxis],
-		               theta2_grid[:,np.newaxis,np.newaxis])
+		               theta2_grid[:,np.newaxis,np.newaxis],
+					   theta0_true, theta1_true, theta2_true, show=show)
 	# A labeled contour plot for the RHS cost function
 	X, Y = np.meshgrid(theta1_grid, theta2_grid)
 	contours = ax[1].contour(X, Y, J_grid, 30)
@@ -71,9 +64,11 @@ elif show == 'theta1_2':
 	ax[1].scatter([theta1_true]*2,[theta2_true]*2,s=[50,10], color=['k','w'])	
 	              
 elif show == 'theta0_2':
-	J_grid = cost_func(theta0_grid[np.newaxis,:,np.newaxis],
+	J_grid = cost_func(x, y, 
+					   theta0_grid[np.newaxis,:,np.newaxis],
 		               theta1_grid[np.newaxis,:,np.newaxis],
-		               theta2_grid[:,np.newaxis,np.newaxis])
+		               theta2_grid[:,np.newaxis,np.newaxis],
+					   theta0_true, theta1_true, theta2_true, show=show)
 	# A labeled contour plot for the RHS cost function
 	X, Y = np.meshgrid(theta0_grid, theta2_grid)
 	contours = ax[1].contour(X, Y, J_grid, 30)
@@ -87,22 +82,11 @@ print(J_grid.shape)
 # Take N steps with learning rate alpha down the steepest gradient,
 # starting at (theta0, theta1) = (0, 0).
 
-alpha = 0.7
-theta = [np.array((0, 0, 0))]
-J = [cost_func(*theta[0])[0]]
-for j in range(N-1):
-    last_theta = theta[-1]
-    this_theta = np.empty((3,))
-    grad_theta0, grad_theta1, grad_theta2 = gradient_descent(alpha, x,
-                                                last_theta[0], last_theta[1], last_theta[2],
-                                                y)
-    print(theta[-1][0], theta[-1][1], theta[-1][2])
-    this_theta[0] = last_theta[0] - grad_theta0
-    this_theta[1] = last_theta[1] - grad_theta1
-    this_theta[2] = last_theta[2] - grad_theta2
-    theta.append(this_theta)
-    J.append(cost_func(*this_theta))
+lr = 0.7
 
+theta, J = gradient_descent(N, lr, x, y,
+							theta0_true, theta1_true, theta2_true,
+							show=show)
 
 # Annotate the cost function plot with coloured points indicating the
 # parameters chosen and red arrows indicating the steps down the gradient.
