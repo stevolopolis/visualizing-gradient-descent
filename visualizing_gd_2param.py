@@ -11,11 +11,15 @@ parser.add_argument('-x', '--one')
 parser.add_argument('-y', '--two')
 parser.add_argument('-z', '--three')
 parser.add_argument('-type', '--show')
+parser.add_argument('-opt', '--optimizer')
+parser.add_argument('-lr', '--lrate')
 args = parser.parse_args()
 theta0_true = int(args.one)
 theta1_true = int(args.two)
 theta2_true = int(args.three)
 show = str(args.show)
+optim = str(args.optimizer)
+lr = float(args.lrate)
 print(theta0_true, type(theta0_true))
 
 # N is the number of iterations
@@ -82,11 +86,14 @@ print(J_grid.shape)
 # Take N steps with learning rate alpha down the steepest gradient,
 # starting at (theta0, theta1) = (0, 0).
 
-lr = 0.7
-
-theta, J = gradient_descent(N, lr, x, y,
-							theta0_true, theta1_true, theta2_true,
-							show=show)
+if optim == 'gd':
+	theta, J = gradient_descent(N, lr, x, y,
+								theta0_true, theta1_true, theta2_true,
+								show=show)
+elif optim == 'adam':
+	theta, J = adam(N, lr, x, y,
+					theta0_true, theta1_true, theta2_true,
+					show=show)
 
 # Annotate the cost function plot with coloured points indicating the
 # parameters chosen and red arrows indicating the steps down the gradient.
