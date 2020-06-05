@@ -32,7 +32,7 @@ def cost_func(x, y, theta0, theta1, theta2, theta0_true, theta1_true, theta2_tru
     	return np.average((y - fx(x, theta0, theta1_true, theta2))**2, axis=2)
 
 
-def calc_gradient(lr, x_vals, theta0_val, theta1_val, theta2_val, y_vals):
+def calc_gradient(x_vals, theta0_val, theta1_val, theta2_val, y_vals):
     x, y, z = sym.symbols('x y z')
     gradsum_theta0 = 0
     gradsum_theta1 = 0
@@ -51,9 +51,9 @@ def calc_gradient(lr, x_vals, theta0_val, theta1_val, theta2_val, y_vals):
         gradsum_theta1 += grad_theta1 
         gradsum_theta2 += grad_theta2
     
-    grad_theta0 = lr * gradsum_theta0 / len(x_vals)
-    grad_theta1 = lr * gradsum_theta1 / len(x_vals)
-    grad_theta2 = lr * gradsum_theta2 / len(x_vals)
+    grad_theta0 = gradsum_theta0 / len(x_vals)
+    grad_theta1 = gradsum_theta1 / len(x_vals)
+    grad_theta2 = gradsum_theta2 / len(x_vals)
     
     return grad_theta0, grad_theta1, grad_theta2
 
@@ -65,12 +65,12 @@ def gradient_descent(N, lr, x_vals, y_vals, theta0_true, theta1_true, theta2_tru
     for j in range(N-1):
         last_theta = theta[-1]
         this_theta = np.empty((3,))
-        grad_theta0, grad_theta1, grad_theta2 = calc_gradient(lr, x_vals, last_theta[0],
+        grad_theta0, grad_theta1, grad_theta2 = calc_gradient(x_vals, last_theta[0],
                                                               last_theta[1], last_theta[2], y_vals)
-        print(theta[-1][0], theta[-1][1], theta[-1][2])
-        this_theta[0] = last_theta[0] - grad_theta0
-        this_theta[1] = last_theta[1] - grad_theta1
-        this_theta[2] = last_theta[2] - grad_theta2
+        print([grad_theta0, grad_theta1, grad_theta2])
+        this_theta[0] = last_theta[0] - (lr * grad_theta0)
+        this_theta[1] = last_theta[1] - (lr * grad_theta1)
+        this_theta[2] = last_theta[2] - (lr * grad_theta2)
         theta.append(this_theta)
         J.append(cost_func(x_vals, y_vals, *this_theta,
                             theta0_true, theta1_true, theta2_true))
@@ -82,21 +82,23 @@ def adam(N, lr, x_vals, y_vals, theta0_true, theta1_true, theta2_true, show='the
     theta = [np.array((0, 0, 0))]
     J = [cost_func(x_vals, y_vals, *theta[0],
                     theta0_true, theta1_true, theta2_true)[0]]
-    for j in range(N-1):
+
+    v_t = 0 
+    s_t = 0
+    for i in range(1, N):
         last_theta = theta[-1]
         this_theta = np.empty((3,))
-        grad_theta0, grad_theta1, grad_theta2 = calc_gradient(lr, x_vals, last_theta[0],
+        grad_theta0, grad_theta1, grad_theta2 = calc_gradient(x_vals, last_theta[0],
                                                               last_theta[1], last_theta[2], y_vals)
         grad_arr = np.array([grad_theta0, grad_theta1, grad_theta2])
 
-        if j == 0:
-            v_t = grad_arr 
-            s_t = np.power(grad_arr, 2)
-        else:
-            v_t = beta1 * v_t - (1- beta1) * grad_arr
-            s_t = beta2 * s_t - (1- beta2) * np.power(grad_arr, 2)
+        v_t = beta1 * v_t + (1- beta1) * grad_arr
+        s_t = beta2 * s_t + (1- beta2) * np.power(grad_arr, 2)
+        print(v_t, s_t)
+        v_t_hat = np.array(v_t / (1 - beta1**i), dtype=np.float32)
+        s_t_hat = np.array(s_t / (1 - beta2**i), dtype=np.float32)
 
-        update_step = lr * v_t / np.sqrt(s_t + epsilon) * grad_arr
+        update_step = lr * v_t_hat / (np.sqrt(s_t_hat) + epsilon)
         this_theta[0] = last_theta[0] - update_step[0]
         this_theta[1] = last_theta[1] - update_step[1]
         this_theta[2] = last_theta[2] - update_step[2]
