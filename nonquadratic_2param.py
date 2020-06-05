@@ -23,13 +23,13 @@ lr = float(args.lrate)
 print(theta0_true, type(theta0_true))
 
 # N is the number of iterations
-N = 8	
+N = 20
 
 # The data to fit
 m = 20
 x = np.linspace(-1,1,m)
 y = theta0_true * x**3 + theta1_true * x**2 + theta2_true * x
-y = np.random.randn(m) + y
+#y = np.random.randn(m) + y
 
 # The plot: LHS is the data, RHS will be the cost function.
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,6.15))
